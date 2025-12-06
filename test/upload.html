@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Foto</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .preview-container {
+            margin-top: 20px;
+        }
+
+        #imagePreview {
+            max-width: 300px;
+            max-height: 300px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Upload Foto</h1>
+
+    <form id="uploadForm">
+        <input type="file" id="fileInput" name="file" accept="image/*">
+        <button type="submit">Upload</button>
+    </form>
+
+    <div class="preview-container">
+        <h3>Preview:</h3>
+        <img id="imagePreview" src="" alt="Image Preview">
+        <p id="status"></p>
+    </div>
+
+    <table>
+        <tr>
+            <th>Gender</th>
+            <th>Score</th>
+        </tr>
+        <tr>
+            <td id="gender"></td>
+            <td id="score"></td>
+        </tr>
+    </table>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const uploadForm = document.getElementById('uploadForm');
+        const status = document.getElementById('status');
+        const gender = document.getElementById('gender');
+        const score = document.getElementById('score');
+
+        // Show image preview
+        fileInput.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    imagePreview.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            } else {
+                imagePreview.style.display = 'none';
+                imagePreview.src = '';
+            }
+        });
+
+        // Handle form submission
+        uploadForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Pilih file dulu!');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            status.textContent = 'Uploading...';
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (!response.ok) {
+                    throw new Error(response.json().error);
+                }
+                const result = await response.json();
+                gender.textContent = result.gender;
+                score.textContent = result.score;
+
+            } catch (error) {
+                console.error('Error:', error);
+                status.textContent = 'Upload gagal: ' + error.message;
+            }
+        });
+    </script>
+</body>
+
+</html>
